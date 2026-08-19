@@ -2,3 +2,8 @@
 # graders-only, never commit
 starter/make_dataset.py
 starter/score_predictions.py
+
+# generated databases and bytecode
+*.sqlite
+__pycache__/
+*.pyc

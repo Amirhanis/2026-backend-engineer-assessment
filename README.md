@@ -4,6 +4,61 @@
 
 ---
 
+## ⚡ How to Run Everything
+
+Assume standard Python 3.10+ with `rapidfuzz` installed (`pip install rapidfuzz`).
+
+### 1. Matcher Evaluation (Task 3)
+Runs the evaluation harness against the labelled training set (`data/order_lines_train.csv`):
+```bash
+python evaluate.py
+```
+*Expected: 420 lines evaluated in <10s (~20ms/line), Precision@Auto ~96.7%, 0 cross-tenant violations.*
+
+### 2. Generate Holdout Predictions (Task 2)
+Generates `predictions.csv` for `data/order_lines_holdout.csv`:
+```bash
+python predict.py
+```
+*Output: `predictions.csv` (301 predictions with calibrated confidence, decision, reason_code, and top-3 candidates).*
+
+### 3. Report Query Performance Benchmark (Task 4)
+Builds the performance SQLite database and validates the optimized report against reference output:
+```bash
+cd starter
+python make_perf_db.py --out ../data/perf.sqlite
+python bench_report.py check --db ../data/perf.sqlite --module my_report:run --repeat 5 --budget-s 10
+cd ..
+```
+*Expected: All 8,666 rows match reference on all 13 columns. Execution time ~6–8s (within ≤10s budget, 360×+ speedup vs 3,050s baseline).*
+
+### 4. Sync Adapter Tests & Verification (Task 5)
+Runs the isolated unit test suite covering all 6 sync defects, and verifies scenario invariants:
+```bash
+cd starter/sync
+python -m unittest test_sync.py -v
+python run_sync.py
+cd ../..
+```
+*Expected: 6/6 tests PASS in <0.05s. `run_sync.py` passes all three invariants.*
+
+---
+
+## 📁 Repository Deliverables Map
+
+| Deliverable | Task | Description |
+|---|---|---|
+| [`DESIGN.md`](DESIGN.md) | Task 1 | Objective function, pipeline architecture, no-embedding justification, 6 failure modes, boundaries. |
+| [`DECISIONS.md`](DECISIONS.md) | Tasks 1–6 | 12 structured decision log entries (context, options, choice, evidence, reversal triggers). |
+| [`matcher/`](matcher/) + [`predict.py`](predict.py) | Task 2 | Deterministic-first multi-lane matcher service + holdout generator. |
+| [`predictions.csv`](predictions.csv) | Task 2 | Holdout predictions conforming to schema with top-3 candidates. |
+| [`evaluate.py`](evaluate.py) + [`EVAL.md`](EVAL.md) | Task 3 | Evaluation harness, metric defense, 20-item hand error analysis, label trap analysis, CI gates. |
+| [`starter/my_report.py`](starter/my_report.py) + [`PERF.md`](PERF.md) | Task 4 | Streaming aggregation rewrite, baseline extrapolation, ablation ranking, p95 column, scale ceiling. |
+| [`starter/sync/sync_adapter.py`](starter/sync/sync_adapter.py) + [`SYNC.md`](SYNC.md) | Task 5 | Fixed adapter, isolated test suite (`test_sync.py`), defect analysis, vendor contract wishlist. |
+| [`SCALE.md`](SCALE.md) | Task 6 | Scaling analysis for 500 tenants, 4M catalogue rows, feedback loop defense, shadow/canary rollouts. |
+
+---
+
 ## 0. Read this first
 
 This assessment is deliberately larger than you can perfect in 3 days. That is the
